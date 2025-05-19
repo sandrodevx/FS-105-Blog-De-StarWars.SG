@@ -1,19 +1,27 @@
-import { Link } from "react-router-dom";
+import React, { useContext } from 'react';
+import { Link } from 'react-router-dom';
+import { StoreContext } from '../store'; // Asumiendo que usas Context
 
-export const Navbar = () => {
+const Navbar = () => {
+  const { store } = useContext(StoreContext);
+  const totalFavorites = store.favorites ? store.favorites.length : 0;
 
-	return (
-		<nav className="navbar navbar-light bg-light">
-			<div className="container">
-				<Link to="/">
-					<span className="navbar-brand mb-0 h1">React Boilerplate</span>
-				</Link>
-				<div className="ml-auto">
-					<Link to="/demo">
-						<button className="btn btn-primary">Check the Context in action</button>
-					</Link>
-				</div>
-			</div>
-		</nav>
-	);
+  return (
+    <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div className="container">
+        <Link className="navbar-brand" to="/">Blog de Star Wars</Link>
+        <div>
+          <ul className="navbar-nav ml-auto">
+            <li className="nav-item">
+              <Link className="nav-link" to="/favorites">
+                Favoritos <span className="badge bg-secondary">{totalFavorites}</span>
+              </Link>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  );
 };
+
+export default Navbar;

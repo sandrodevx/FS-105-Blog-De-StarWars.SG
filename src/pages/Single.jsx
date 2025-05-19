@@ -1,37 +1,76 @@
-// Import necessary hooks and components from react-router-dom and other libraries.
-import { Link, useParams } from "react-router-dom";  // To use link for navigation and useParams to get URL parameters
-import PropTypes from "prop-types";  // To define prop types for this component
-import rigoImageUrl from "../assets/img/rigo-baby.jpg"  // Import an image asset
-import useGlobalReducer from "../hooks/useGlobalReducer";  // Import a custom hook for accessing the global state
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 
-// Define and export the Single component which displays individual item details.
-export const Single = props => {
-  // Access the global state using the custom hook.
-  const { store } = useGlobalReducer()
+const Single = ({ entityType }) => {
+  const { id } = useParams();
+  const [item, setItem] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Retrieve the 'theId' URL parameter using useParams hook.
-  const { theId } = useParams()
-  const singleTodo = store.todos.find(todo => todo.id === parseInt(theId));
+  useEffect(() => {
+    const fetchDetails = async (type, itemId) => {
+      console.log('Fetching details for:', type, itemId); // Añade este log
+      try {
+        const response = await fetch(`https://swapi.tech/api/${type}/${itemId}`);
+        console.log('Response:', response); // Añade este log
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Data received:', data); // Añade este log
+        setItem(data);
+      } catch (e) {
+        console.error('Fetch error:', e); // Asegúrate de que el error se loguea
+        setError(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (entityType && id) {
+      fetchDetails(entityType, id);
+    }
+  }, [entityType, id]);
+
+  console.log('entityType:', entityType, 'id:', id); // Añade este log al inicio
+
+  if (loading) {
+    return <div>Cargando detalles...</div>;
+  }
+
+  if (error) {
+    return <div>Error al cargar los detalles: {error.message}</div>;
+  }
+
+  if (!item) {
+    return <div>No se encontraron detalles.</div>;
+  }
 
   return (
-    <div className="container text-center">
-      {/* Display the title of the todo element dynamically retrieved from the store using theId. */}
-      <h1 className="display-4">Todo: {singleTodo?.title}</h1>
-      <hr className="my-4" />  {/* A horizontal rule for visual separation. */}
-
-      {/* A Link component acts as an anchor tag but is used for client-side routing to prevent page reloads. */}
-      <Link to="/">
-        <span className="btn btn-primary btn-lg" href="#" role="button">
-          Back home
-        </span>
-      </Link>
+    <div className="card">
+      <div className="card-body">
+        <h2 className="card-title">{item.name}</h2>
+        {entityType === 'people' && (
+          <>
+            <p><strong>Género:</strong> {item.gender}</p>
+            <p><strong>Año de Nacimiento:</strong> {item.birth_year}</p>
+          </>
+        )}
+        {entityType === 'vehicle' && (
+          <>
+            <p><strong>Modelo:</strong> {item.model}</p>
+            <p><strong>Fabricante:</strong> {item.manufacturer}</p>
+          </>
+        )}
+        {entityType === 'planet' && (
+          <>
+            <p><strong>Clima:</strong> {item.climate}</p>
+            <p><strong>Terreno:</strong> {item.terrain}</p>
+          </>
+        )}
+      </div>
     </div>
   );
 };
 
-// Use PropTypes to validate the props passed to this component, ensuring reliable behavior.
-Single.propTypes = {
-  // Although 'match' prop is defined here, it is not used in the component.
-  // Consider removing or using it as needed.
-  match: PropTypes.object
-};
+export default Single;
