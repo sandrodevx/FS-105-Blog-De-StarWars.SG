@@ -1,113 +1,88 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Link } from 'react-router-dom';
-import { StoreContext } from '../store'; // Asumiendo que usas Context
+import React, { useState, useEffect } from 'react';
+import { Container, Row, Col, Nav, Spinner } from 'react-bootstrap';
+import EntityCard from '../components/EntityCard';
+import { loadAllEntities, fetchEntities } from '../services/swapi';
 
 const Home = () => {
-  const { store, actions } = useContext(StoreContext);
-  const [people, setPeople] = useState([]);
-  const [vehicles, setVehicles] = useState([]);
-  const [planets, setPlanets] = useState([]);
-  const [loading, setLoading] = useState(true); // Aunque no lo usas aquí, puede ser útil
-  const [error, setError] = useState(null);   // Igual que loading
+  const [activeTab, setActiveTab] = useState('people');
+  const [entities, setEntities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const fetchEntities = async (url, setter) => {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+  // Carga inicial de todas las entidades
+  useEffect(() => {
+    const initializeData = async () => {
+      try {
+        setLoading(true);
+        const allData = await loadAllEntities();
+        setEntities(allData[activeTab] || []);
+      } catch (err) {
+        setError('Error loading initial data');
+      } finally {
+        setLoading(false);
       }
-      const data = await response.json();
-      setter(data.results);
-    } catch (e) {
-      setError(e);
+    };
+
+    initializeData();
+  }, []);
+
+  // Cambio de tab
+  const handleTabChange = async (tab) => {
+    if (tab !== activeTab) {
+      setActiveTab(tab);
+      setLoading(true);
+      try {
+        const data = await fetchEntities(tab);
+        setEntities(data);
+      } catch (err) {
+        setError('Error loading data');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  useEffect(() => {
-    fetchEntities('https://swapi.tech/api/people/', setPeople);
-    fetchEntities('https://swapi.tech/api/vehicles/', setVehicles);
-    fetchEntities('https://swapi.tech/api/planets/', setPlanets);
-  }, []);
-
-  const isFavorite = (item) => {
-    return store.favorites.some(fav => (fav.uid || fav.url) === (item.uid || item.url));
-  };
-
-  const handleAddToFavorites = (item) => {
-    actions.addFavorite(item);
-  };
-
-  const handleRemoveFromFavorites = (item) => {
-    actions.removeFavorite(item);
-  };
-
   return (
-    <div>
-      <h2>Personajes</h2>
-      <div className="row row-cols-1 row-cols-md-3 g-4">
-        {people.map((person) => (
-          <div className="col" key={person.uid}>
-            <div className="card h-100">
-              <div className="card-body">
-                <h5 className="card-title">{person.name}</h5>
-                <p className="card-text">Género: {person.gender}</p>
-                <Link to={`/people/${person.uid}`} className="btn btn-primary btn-sm"></Link>
+    <Container className="py-4">
+      <Nav 
+        variant="tabs" 
+        className="mb-4" 
+        activeKey={activeTab} 
+        onSelect={handleTabChange}
+      >
+        <Nav.Item>
+          <Nav.Link eventKey="people">People</Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="vehicles">Vehicles</Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="planets">Planets</Nav.Link>
+        </Nav.Item>
+      </Nav>
 
+      {error && (
+        <div className="alert alert-danger text-center" role="alert">
+          {error}
+        </div>
+      )}
 
-                <button
-                  onClick={() => (isFavorite(person) ? handleRemoveFromFavorites(person) : handleAddToFavorites(person))}
-                  className={`btn btn-outline-warning btn-sm ms-2`}
-                >
-                  <i className={`bi ${isFavorite(person) ? 'bi-star-fill' : 'bi-star'}`}></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <h2 className="mt-4">Vehículos</h2>
-      <div className="row row-cols-1 row-cols-md-3 g-4">
-        {vehicles.map((vehicle) => (
-          <div className="col" key={vehicle.uid}>
-            <div className="card h-100">
-              <div className="card-body">
-                <h5 className="card-title">{vehicle.name}</h5>
-                <p className="card-text">Modelo: {vehicle.model}</p>
-                <Link to={`/vehicles/${vehicle.uid}`} className="btn btn-primary btn-sm"></Link>
-                <button
-                  onClick={() => (isFavorite(vehicle) ? handleRemoveFromFavorites(vehicle) : handleAddToFavorites(vehicle))}
-                  className={`btn btn-outline-warning btn-sm ms-2`}
-                >
-                  <i className={`bi ${isFavorite(vehicle) ? 'bi-star-fill' : 'bi-star'}`}></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <h2 className="mt-4">Planetas</h2>
-      <div className="row row-cols-1 row-cols-md-3 g-4">
-        {planets.map((planet) => (
-          <div className="col" key={planet.uid}>
-            <div className="card h-100">
-              <div className="card-body">
-                <h5 className="card-title">{planet.name}</h5>
-                <p className="card-text">Terreno: {planet.terrain}</p>
-				<Link to={`/planets/${planet.uid}`} className="btn btn-primary btn-sm"></Link>
-                <button
-                  onClick={() => (isFavorite(planet) ? handleRemoveFromFavorites(planet) : handleAddToFavorites(planet))}
-                  className={`btn btn-outline-warning btn-sm ms-2`}
-                >
-                  <i className={`bi ${isFavorite(planet) ? 'bi-star-fill' : 'bi-star'}`}></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+      {loading ? (
+        <div className="text-center py-5">
+          <Spinner animation="border" role="status" variant="primary">
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+        </div>
+      ) : (
+        <Row>
+          {entities.map((entity) => (
+            <Col key={entity.uid} xs={12} sm={6} md={4} lg={3} className="mb-4">
+              <EntityCard entity={entity} entityType={activeTab} />
+            </Col>
+          ))}
+        </Row>
+      )}
+    </Container>
   );
 };
 

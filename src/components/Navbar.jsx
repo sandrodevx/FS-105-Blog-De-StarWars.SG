@@ -1,26 +1,31 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { StoreContext } from '../store'; // Asumiendo que usas Context
+import { Navbar as BootstrapNavbar, Container } from 'react-bootstrap';
+import { useStore } from '../store';
 
 const Navbar = () => {
-  const { store } = useContext(StoreContext);
+  const { store } = useStore();
   const totalFavorites = store.favorites ? store.favorites.length : 0;
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div className="container">
-        <Link className="navbar-brand" to="/">Blog de Star Wars</Link>
-        <div>
-          <ul className="navbar-nav ml-auto">
-            <li className="nav-item">
-              <Link className="nav-link" to="/favorites">
-                Favoritos <span className="badge bg-secondary">{totalFavorites}</span>
-              </Link>
-            </li>
-          </ul>
+    <BootstrapNavbar bg="dark" variant="dark" expand="lg">
+      <Container>
+        <Link to="/" className="navbar-brand d-flex align-items-center">
+          <img
+            src="https://pngimg.com/uploads/star_wars_logo/star_wars_logo_PNG34.png"
+            height="50"
+            alt="Star Wars Logo"
+            className="me-2"
+            style={{ filter: 'brightness(0) invert(1)' }}
+          />
+        </Link>
+        <div className="ms-auto">
+          <Link to="/favorites" className="btn btn-outline-light">
+            Favorites <span className="badge bg-danger ms-1">{totalFavorites}</span>
+          </Link>
         </div>
-      </div>
-    </nav>
+      </Container>
+    </BootstrapNavbar>
   );
 };
 

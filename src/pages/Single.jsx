@@ -1,75 +1,80 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { Container, Card, Row, Col } from 'react-bootstrap';
+import { fetchEntityDetails } from '../services/swapi';
 
 const Single = ({ entityType }) => {
   const { id } = useParams();
-  const [item, setItem] = useState(null);
+  const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchDetails = async (type, itemId) => {
-      console.log('Fetching details for:', type, itemId); // Añade este log
-      try {
-        const response = await fetch(`https://swapi.tech/api/${type}/${itemId}`);
-        console.log('Response:', response); // Añade este log
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log('Data received:', data); // Añade este log
-        setItem(data);
-      } catch (e) {
-        console.error('Fetch error:', e); // Asegúrate de que el error se loguea
-        setError(e);
-      } finally {
-        setLoading(false);
-      }
+    const loadDetails = async () => {
+      setLoading(true);
+      const result = await fetchEntityDetails(entityType, id);
+      setDetails(result);
+      setLoading(false);
     };
 
-    if (entityType && id) {
-      fetchDetails(entityType, id);
-    }
+    loadDetails();
   }, [entityType, id]);
 
-  console.log('entityType:', entityType, 'id:', id); // Añade este log al inicio
-
   if (loading) {
-    return <div>Cargando detalles...</div>;
+    return (
+      <Container className="text-center py-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </Container>
+    );
   }
 
-  if (error) {
-    return <div>Error al cargar los detalles: {error.message}</div>;
+  if (!details || !details.properties) {
+    return (
+      <Container className="text-center py-5">
+        <h3>No se encontraron detalles</h3>
+      </Container>
+    );
   }
 
-  if (!item) {
-    return <div>No se encontraron detalles.</div>;
-  }
+  const { properties } = details;
 
   return (
-    <div className="card">
-      <div className="card-body">
-        <h2 className="card-title">{item.name}</h2>
-        {entityType === 'people' && (
-          <>
-            <p><strong>Género:</strong> {item.gender}</p>
-            <p><strong>Año de Nacimiento:</strong> {item.birth_year}</p>
-          </>
-        )}
-        {entityType === 'vehicle' && (
-          <>
-            <p><strong>Modelo:</strong> {item.model}</p>
-            <p><strong>Fabricante:</strong> {item.manufacturer}</p>
-          </>
-        )}
-        {entityType === 'planet' && (
-          <>
-            <p><strong>Clima:</strong> {item.climate}</p>
-            <p><strong>Terreno:</strong> {item.terrain}</p>
-          </>
-        )}
-      </div>
-    </div>
+    <Container className="py-4">
+      <Row className="justify-content-center">
+        <Col md={8}>
+          <Card>
+            <Card.Body>
+              <Card.Title as="h2" className="text-center mb-4">{properties.name}</Card.Title>
+              {entityType === 'people' && (
+                <div>
+                  <p><strong>Height:</strong> {properties.height}</p>
+                  <p><strong>Mass:</strong> {properties.mass}</p>
+                  <p><strong>Birth Year:</strong> {properties.birth_year}</p>
+                  <p><strong>Gender:</strong> {properties.gender}</p>
+                </div>
+              )}
+              {entityType === 'vehicles' && (
+                <div>
+                  <p><strong>Model:</strong> {properties.model}</p>
+                  <p><strong>Manufacturer:</strong> {properties.manufacturer}</p>
+                  <p><strong>Cost:</strong> {properties.cost_in_credits} credits</p>
+                  <p><strong>Speed:</strong> {properties.max_atmosphering_speed}</p>
+                </div>
+              )}
+              {entityType === 'planets' && (
+                <div>
+                  <p><strong>Climate:</strong> {properties.climate}</p>
+                  <p><strong>Terrain:</strong> {properties.terrain}</p>
+                  <p><strong>Population:</strong> {properties.population}</p>
+                  <p><strong>Diameter:</strong> {properties.diameter}</p>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
   );
 };
 
