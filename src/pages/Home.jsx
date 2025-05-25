@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Nav, Spinner } from 'react-bootstrap';
 import EntityCard from '../components/EntityCard';
-import { loadAllEntities, fetchEntities } from '../services/swapi';
+import { loadAllEntities, fetchEntities } from '../services/starWarsApi';
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState('people');

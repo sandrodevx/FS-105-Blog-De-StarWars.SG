@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Container, Card, Row, Col } from 'react-bootstrap';
-import { fetchEntityDetails } from '../services/swapi';
+import { fetchEntityDetails } from '../services/starWarsApi';
 
-const Single = ({ entityType }) => {
+const EntityDetailPage = ({ entityType }) => {
   const { id } = useParams();
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -78,4 +78,4 @@ const Single = ({ entityType }) => {
   );
 };
 
-export default Single;
+export default EntityDetailPage; 
