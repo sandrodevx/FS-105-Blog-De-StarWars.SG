@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Nav, Spinner } from 'react-bootstrap';
 import EntityCard from '../components/EntityCard';
-import { loadAllEntities, fetchEntities } from '../services/starWarsApi';
+import { loadAllEntitiesWithDetails, fetchEntitiesWithDetails } from '../services/starWarsApi';
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState('people');
@@ -9,14 +9,20 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Carga inicial de todas las entidades
+  // Carga inicial de todas las entidades con detalles completos
   useEffect(() => {
     const initializeData = async () => {
       try {
         setLoading(true);
-        const allData = await loadAllEntities();
+        setError(null);
+        console.log('Loading initial data with full details...');
+        
+        const allData = await loadAllEntitiesWithDetails();
         setEntities(allData[activeTab] || []);
+        
+        console.log(`Loaded ${allData[activeTab]?.length || 0} ${activeTab} with details`);
       } catch (err) {
+        console.error('Error loading initial data:', err);
         setError('Error loading initial data');
       } finally {
         setLoading(false);
@@ -26,16 +32,21 @@ const Home = () => {
     initializeData();
   }, []);
 
-  // Cambio de tab
+  // Cambio de tab - ahora con detalles completos
   const handleTabChange = async (tab) => {
     if (tab !== activeTab) {
       setActiveTab(tab);
       setLoading(true);
+      setError(null);
+      
       try {
-        const data = await fetchEntities(tab);
+        console.log(`Loading ${tab} with full details...`);
+        const data = await fetchEntitiesWithDetails(tab);
         setEntities(data);
+        console.log(`Loaded ${data.length} ${tab} with details`);
       } catch (err) {
-        setError('Error loading data');
+        console.error(`Error loading ${tab}:`, err);
+        setError(`Error loading ${tab}`);
       } finally {
         setLoading(false);
       }
@@ -64,14 +75,17 @@ const Home = () => {
       {error && (
         <div className="alert alert-danger text-center" role="alert">
           {error}
+          <br />
+          <small>Check browser console for more details</small>
         </div>
       )}
 
       {loading ? (
         <div className="text-center py-5">
           <Spinner animation="border" role="status" variant="primary">
-            <span className="visually-hidden">Loading...</span>
+            <span className="visually-hidden">Loading entities with full details...</span>
           </Spinner>
+          <p className="mt-2">Loading {activeTab} with complete information...</p>
         </div>
       ) : (
         <Row>
@@ -80,6 +94,13 @@ const Home = () => {
               <EntityCard entity={entity} entityType={activeTab} />
             </Col>
           ))}
+          {entities.length === 0 && !loading && (
+            <Col xs={12}>
+              <div className="text-center py-5">
+                <p>No {activeTab} found.</p>
+              </div>
+            </Col>
+          )}
         </Row>
       )}
     </Container>
